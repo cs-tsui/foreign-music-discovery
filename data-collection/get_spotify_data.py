@@ -1,23 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[23]:
-
-
+import pandas as pd
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-
 
 auth_manager = SpotifyClientCredentials()
 sp = spotipy.Spotify(auth_manager=auth_manager)
 
-
-# In[24]:
-
-
-
 # IDs of playlists
-
+# TODO: automate gathering playlists in the first place
 playlists = [
     {
         'lang': 'Chinese',
@@ -126,22 +118,18 @@ playlists = [
         'playlist_name': 'The Sound of Greek Trap'
         
     },
-#     {
-#         'lang': 'English',
-#         'id': '37i9dQZF1DX0XUsuxWHRQd',
-#         'playlist_name': 'RapCaviar'
-#     },
     {
         'lang': 'English',
         'id': '6MXkE0uYF4XwU4VTtyrpfP',
         'playlist_name': 'The Sound of Hip Hop'
     }
 ]
-# playlists = playlists[4:5]
 
-# playlist_ids = [sound_of_chinese_hip_hop,sound_of_ktrap,sound_of_thai_hip_hop]
+# Hold all tracks
 all_tracks = []
 
+# Fetch all songs from each playlist and push 
+# to all_tracks array
 for pl in playlists:
     print(pl['playlist_name'])
     results = sp.playlist_tracks(pl['id'])
@@ -162,50 +150,19 @@ for pl in playlists:
     print(len(tracks))
     print("Done")
 
+print("number of tracks: ", len(all_tracks))
+print("number of playlists: ", len(playlists) )
 
-# In[25]:
-
-
-print("number of tracks", len(all_tracks))
-
-# all_tracks[-2]['name']
-# all_tracks[]
-
-print("number of playlists:", len(playlists) )
-
-
-# In[4]:
-
-
-all_tracks[0]
-
-
-# In[26]:
-
-
-id1 = all_tracks[0]['id']
-# aa = sp.audio_analysis(id1)
-af = sp.audio_features(tracks=[id1])
-
-
-# In[27]:
-
-
+# Generate n size chunks to be used when 
+# calling Spotify API
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-
-# In[28]:
-
-
 all_chunks = chunks(all_tracks, 100)
 
-
-# In[29]:
-
-
+# Get audio features for chunked up all_tracks
 for chunk in all_chunks:
     track_ids = [track['id'] for track in chunk]
     chunk_afs = sp.audio_features(tracks=track_ids)
@@ -213,35 +170,13 @@ for chunk in all_chunks:
     for track, audio_feature in zip(chunk, chunk_afs):
         track['audio_features'] = audio_feature
     
-    print(chunk[0])
+    print('chunk fetched')
 
-
-# In[ ]:
-
-
-
-
-
-# In[32]:
-
-
-count=0
-for track in all_tracks:
-    if 'danceability' not in track:
-#         print(track['name'])
-        count += 1
-print(count)
-
-print(all_tracks[-1])
-
-
-# In[31]:
-
-
-# flatten tracks dictionary
-
-keys_to_keep = ['id', 'name', 'popularity', 'uri', 'lang', 'duration_ms', 'time_signature', 'danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'track_href', 'analysis_url']
-# artists[0]['name']
+# Flatten tracks dictionary since audio_features are nested currently
+keys_to_keep = ['id', 'name', 'popularity', 'uri', 'lang', 'duration_ms',
+                    'time_signature', 'danceability', 'energy', 'key', 'loudness',
+                        'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness',
+                            'valence', 'tempo', 'track_href', 'analysis_url']
 
 cleaned_tracks = []
 for track in all_tracks:
@@ -252,54 +187,7 @@ for track in all_tracks:
 
 print(len(cleaned_tracks))
 
-
-# In[33]:
-
-
-print(cleaned_tracks[-1])
-
-
-# In[34]:
-
-
-import pandas as pd
-# cols = ['id', 'name', 'artist', 'popularity', 'uri', 'lang', 'danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'track_href', 'analysis_url', 'time_signature']
-
+# Create dataframe for ease of saving to CSV
+# TODO: save to database in the future
 mydf = pd.DataFrame(cleaned_tracks)
-
-
-# In[35]:
-
-
 mydf.to_csv('multilang_playlist.csv')
-
-
-# In[36]:
-
-
-# song_1['track']['id']
-
-
-# In[37]:
-
-
-read_df = pd.read_csv('multilang_playlist.csv')
-
-
-# In[38]:
-
-
-read_df.tail()
-
-
-# In[39]:
-
-
-read_df.describe()
-
-
-# In[ ]:
-
-
-
-
